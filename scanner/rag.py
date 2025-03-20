@@ -21,7 +21,7 @@ from datetime import datetime
 from bson import ObjectId
 
 # MongoDB Configuration
-MONGO_URI = "mongodb+srv://astraaccess:hbf3bcyZhcb3ycb@astrart.ccqas.mongodb.net/NewReportingtool?retryWrites=true&w=majority&appName=AstraRT"
+MONGO_URI = "your url"
 DB_NAME = "NewReportingtool"
 COLLECTION_NAME = "findings"
 
