@@ -20,7 +20,7 @@ from langchain.chains import RetrievalQA
 from langchain_community.llms import Ollama
 
 # MongoDB Configuration
-MONGO_URI = ""
+MONGO_URI = "mongodb+srv://astraaccess:hbf3bcyZhcb3ycb@astrart.ccqas.mongodb.net/NewReportingtool?retryWrites=true&w=majority&appName=AstraRT"
 DB_NAME = "NewReportingtool"
 COLLECTION_NAME = "findings"
 
