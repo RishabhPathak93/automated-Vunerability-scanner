@@ -12,6 +12,7 @@ from pymongo import MongoClient
 import uuid
 from datetime import datetime
 from bson import ObjectId
+from tqdm import tqdm  # Import tqdm
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_core.documents import Document
@@ -95,7 +96,7 @@ def extract_relevant_info(output, file_name, eng, owner, file_content):
                 "cvss_vector": "NA",
                 "cvss_score": "NA",
                 "reference": "NA",
-                "assitance": "ASCR",
+                "assistance": "ASCR",
                 "pocpic": full_vulnerable_code,
                 "pocdesc": "[]",
                 "rpoc": "[]",
@@ -115,7 +116,7 @@ def extract_relevant_info(output, file_name, eng, owner, file_content):
 def chunk_code(code, chunk_size=MAX_TOKENS):
     return [code[i:i + chunk_size] for i in range(0, len(code), chunk_size)]
 
-def scan_file(file_id, file_path, results_queue, engagement, owner):
+def scan_file(file_id, file_path, results_queue, engagement, owner, progress_counter):
     file_name = os.path.basename(file_path)
     print(f"🔍 Scanning {file_name}")
 
@@ -157,25 +158,56 @@ def scan_file(file_id, file_path, results_queue, engagement, owner):
 
         if all_findings:
             results_queue.put(all_findings)
+        
+        with progress_counter.get_lock():
+            progress_counter.value += 1  # Update progress
     except Exception as e:
         print(f"⚠️ Error scanning {file_path}: {str(e)}")
 
-def scan_folder(folder_path, engagement, owner, num_workers=4):
+def scan_folder(folder_path, engagement, owner, num_workers=4, scan_progress=None):
     source_files = get_source_files(folder_path)
+    total_files = len(source_files)
+    
     if not source_files:
         print(f"❌ No source code files found in {folder_path}")
         return
 
+    # Update progress tracking
+    if scan_progress is not None:
+        scan_progress[folder_path] = {"scanned": 0, "total": total_files}
+
     results_queue = multiprocessing.Queue()
-    processes = [multiprocessing.Process(target=scan_file, args=(i, f, results_queue, engagement, owner)) for i, f in enumerate(source_files)]
-    
-    for p in processes: p.start()
-    for p in processes: p.join()
-    
+    progress_counter = multiprocessing.Value('i', 0)
+
+    processes = [
+        multiprocessing.Process(target=scan_file, args=(i, f, results_queue, engagement, owner, progress_counter)) 
+        for i, f in enumerate(source_files)
+    ]
+
+    def update_progress():
+        while progress_counter.value < total_files:
+            if scan_progress is not None:
+                scan_progress[folder_path]["scanned"] = progress_counter.value
+            time.sleep(0.5)
+
+    progress_thread = Thread(target=update_progress)
+    progress_thread.start()
+
+    for p in processes:
+        p.start()
+    for p in processes:
+        p.join()
+
+    progress_thread.join()
+
     final_results = []
     while not results_queue.empty():
         final_results.extend(results_queue.get())
-    
+
     if final_results:
         vuln_collection.insert_many(final_results)
+
     print("✅ Scan completed! Results saved.")
+
+    if scan_progress is not None:
+        scan_progress[folder_path]["scanned"] = total_files  # Ensure progress reaches 100%
