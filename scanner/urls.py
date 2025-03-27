@@ -6,3 +6,4 @@ urlpatterns = [
     path("results/", ScanResultsView.as_view(), name="scan-results"),
     path("progress/", ScanProgressView.as_view(), name="scan-progress"),
 ]
+
