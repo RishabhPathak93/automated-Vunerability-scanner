@@ -86,11 +86,11 @@ def extract_relevant_info(output, file_name, engagement, owner, file_content):
 
         vulnerabilities.append({
             "title": match[0].strip(),
-            "CWE": match[1].strip(),
+            "cwe": match[1].strip(),
             "severity": match[2].strip(),
-            "impact": match[3].strip(),
+            "security_risk": match[3].strip(),
             "mitigation": match[4].strip(),
-            "affected": f"{file_name} - {match[5].strip()}",
+            "affected_url": f"{file_name} - {match[5].strip()}",
             "engagement": ObjectId(engagement),
             "code": 'F-' + str(uuid.uuid4()).replace('-', '')[:8],
             "owner": ObjectId(owner),
@@ -106,7 +106,7 @@ def extract_relevant_info(output, file_name, engagement, owner, file_content):
             "approved": False,
             "status": "OPEN",
             "deleted": False,
-            "createdAt": datetime.utcnow().isoformat(timespec='milliseconds') + 'Z',
+            "createdat": datetime.utcnow().isoformat(timespec='milliseconds') + 'Z',
         })
 
     return vulnerabilities
