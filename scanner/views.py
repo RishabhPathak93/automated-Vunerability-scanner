@@ -50,4 +50,3 @@ class ScanResultsView(APIView):
             return Response({"error": "Scan not completed or invalid folder path."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"message": "Scan results available.", "folder_path": folder_path}, status=status.HTTP_200_OK)
-
